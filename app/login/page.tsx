@@ -104,9 +104,11 @@ export default function LoginPage() {
         <div className="mt-6 space-y-3">
           <button
             onClick={() => handleOAuthLogin('kakao')}
-            className="w-full bg-[#FEE500] text-[#000000] p-3 rounded-xl font-semibold hover:bg-[#FEE500]/90 transition flex justify-center items-center"
+            disabled
+            title="현재 카카오 로그인 연동 준비 중입니다."
+            className="w-full bg-[#FEE500] text-[#000000] p-3 rounded-xl font-semibold transition flex justify-center items-center opacity-50 cursor-not-allowed"
           >
-            카카오로 시작하기
+            카카오로 시작하기 (준비 중)
           </button>
           {/* 네이버는 Supabase OAuth에서 공식 지원하지 않아 커스텀 혹은 다른 프로바이더 사용이 필요할 수 있습니다. */}
         </div>

@@ -9,7 +9,7 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: 'Nickname is required' }, { status: 400 })
   }
 
-  const supabase = createClient()
+  const supabase = await createClient()
 
   // 닉네임 중복 체크 (대소문자 구분 없이 혹은 정확히 매치 등)
   const { data, error } = await supabase
