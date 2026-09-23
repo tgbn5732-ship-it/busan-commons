@@ -446,6 +446,11 @@ export default function PillCameraUploader() {
         })
         .catch(() => {});
 
+      // Register Service Worker for PWA installability on mobile Chrome/Android
+      if ("serviceWorker" in navigator) {
+        navigator.serviceWorker.register("/sw.js").catch(() => {});
+      }
+
       // Check if already installed / running standalone
       if (
         window.matchMedia("(display-mode: standalone)").matches ||
