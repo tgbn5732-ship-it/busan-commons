@@ -1,0 +1,45 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#10b981"/>
+      <stop offset="50%" stop-color="#059669"/>
+      <stop offset="100%" stop-color="#047857"/>
+    </linearGradient>
+    <linearGradient id="capsuleGrad1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="100%" stop-color="#f1f5f9"/>
+    </linearGradient>
+    <linearGradient id="capsuleGrad2" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38bdf8"/>
+      <stop offset="100%" stop-color="#0284c7"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="16" stdDeviation="16" flood-color="#022c22" flood-opacity="0.4"/>
+    </filter>
+  </defs>
+
+  <!-- Background rounded rectangle -->
+  <rect width="512" height="512" rx="112" fill="url(#bgGrad)"/>
+
+  <!-- Camera viewfinder rings -->
+  <circle cx="256" cy="256" r="170" stroke="rgba(255,255,255,0.2)" stroke-width="4" stroke-dasharray="16 12"/>
+  <circle cx="256" cy="256" r="110" stroke="rgba(255,255,255,0.25)" stroke-width="3"/>
+  <line x1="256" y1="56" x2="256" y2="96" stroke="rgba(255,255,255,0.5)" stroke-width="6" stroke-linecap="round"/>
+  <line x1="256" y1="416" x2="256" y2="456" stroke="rgba(255,255,255,0.5)" stroke-width="6" stroke-linecap="round"/>
+  <line x1="56" y1="256" x2="96" y2="256" stroke="rgba(255,255,255,0.5)" stroke-width="6" stroke-linecap="round"/>
+  <line x1="416" y1="256" x2="456" y2="256" stroke="rgba(255,255,255,0.5)" stroke-width="6" stroke-linecap="round"/>
+
+  <!-- Main Capsule Pill Group tilted at -35deg -->
+  <g transform="translate(256, 256) rotate(-35) translate(-256, -256)" filter="url(#shadow)">
+    <path d="M 176 166 C 176 120 212 90 256 90 C 300 90 336 120 336 166 L 336 256 L 176 256 Z" fill="url(#capsuleGrad2)" />
+    <path d="M 176 256 L 336 256 L 336 346 C 336 392 300 422 256 422 C 212 422 176 392 176 346 Z" fill="url(#capsuleGrad1)" />
+    <line x1="176" y1="256" x2="336" y2="256" stroke="rgba(15,23,42,0.18)" stroke-width="5"/>
+    <path d="M 206 140 C 216 116 236 106 256 106" stroke="rgba(255,255,255,0.7)" stroke-width="12" stroke-linecap="round" fill="none"/>
+  </g>
+
+  <!-- AI Lens Sparkle / Star in top-right -->
+  <g transform="translate(376, 116)">
+    <path d="M 0 -32 Q 0 0 32 0 Q 0 0 0 32 Q 0 0 -32 0 Q 0 0 0 -32 Z" fill="#fef08a" />
+    <circle cx="0" cy="0" r="6" fill="#ffffff" />
+  </g>
+</svg>
