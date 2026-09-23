@@ -381,7 +381,8 @@ async function getBase64FromUrl(url: string): Promise<string> {
     const img = document.createElement("img");
     img.crossOrigin = "anonymous";
     img.onload = () => {
-      const maxDim = 900;
+      // High resolution for 100+ pill clusters and clear separation of touching pills
+      const maxDim = 1440;
       let w = img.naturalWidth || img.width;
       let h = img.naturalHeight || img.height;
       if (w > maxDim || h > maxDim) {
@@ -402,7 +403,7 @@ async function getBase64FromUrl(url: string): Promise<string> {
         return;
       }
       ctx.drawImage(img, 0, 0, w, h);
-      resolve(canvas.toDataURL("image/jpeg", 0.8));
+      resolve(canvas.toDataURL("image/jpeg", 0.85));
     };
     img.onerror = (e) => reject(e);
     img.src = url;
@@ -1245,14 +1246,15 @@ export default function PillCameraUploader() {
 
       {/* Photography Guide / Tips Accordion */}
       {showTips && (
-        <div className="bg-slate-100/90 rounded-2xl p-3.5 text-xs text-slate-600 space-y-1.5 transition-all">
-          <div className="font-bold text-slate-800 flex items-center gap-1">
-            <Info className="w-3.5 h-3.5 text-emerald-600" />
-            <span>정확한 다중 알약 카운팅 팁</span>
+        <div className="bg-emerald-50/90 border border-emerald-150 rounded-2xl p-4 text-xs text-slate-700 space-y-2 transition-all">
+          <div className="font-bold text-emerald-900 flex items-center gap-1.5 text-sm">
+            <Info className="w-4 h-4 text-emerald-600" />
+            <span>약국 100정 조제 정밀 카운팅 팁</span>
           </div>
-          <ul className="list-disc list-inside space-y-1 text-slate-600 pl-0.5">
-            <li><strong>물리적 면적(A0) 기준 분할</strong>: 캡슐 고유 면적을 측정하여 뭉친 구역을 정확하게 분할합니다.</li>
-            <li><strong>알약 직접 터치</strong>: 미처 마커가 안 찍힌 알약은 손가락으로 탭하면 즉시 추가(+1)됩니다!</li>
+          <ul className="list-disc list-inside space-y-1.5 text-slate-700 pl-0.5 leading-relaxed">
+            <li><strong>트레이에 가볍게 펼치기 (단층 분산)</strong>: 알약이 위아래로 포개지지 않도록 트레이에 살짝 흔들어 한 층으로 펼쳐주세요. (겹쳐 가려진 알약 오차 방지)</li>
+            <li><strong>수직 90도 탑다운 촬영</strong>: 카메라를 비스듬하지 않고 위에서 똑바로 내려다보듯 촬영하면 맞닿은 경계선이 100% 선명하게 인식됩니다.</li>
+            <li><strong>원터치 마커 보정 (+1 / -1)</strong>: 결과 화면에서 누락된 알약을 가볍게 탭하면 즉시 +1 마커가 생성되며, 잘못 찍힌 마커는 탭하여 삭제할 수 있습니다.</li>
           </ul>
         </div>
       )}

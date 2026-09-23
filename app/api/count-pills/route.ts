@@ -46,28 +46,38 @@ export async function POST(req: NextRequest) {
       cleanBase64 = parts[1];
     }
 
-    const systemPrompt = `You are a high-speed pharmacy dispensing assistant and pill counter.
-Your task is to locate and count EVERY SINGLE pill, tablet, or capsule in the image with 100% precision.
+    const systemPrompt = `You are a professional pharmacy dispensing AI and precision pill counter.
+Your task is to locate and count EVERY SINGLE pill, tablet, or capsule in the image with 100% precision. In pharmacy dispensing, missing even a single pill is a serious dispensing hazard.
 
-CRITICAL INSTRUCTIONS:
-1. Count ALL pills, tablets, and capsules, even if touching, slightly overlapping, or of different colors (e.g. pink, white, green, yellow, clear).
-2. Ignore shadows, knife marks, glare, reflections, or empty tray surfaces.
-3. For maximum speed, return ONLY this compact JSON format:
+CRITICAL DISPENSING RULES:
+1. TOUCHING & CLUSTERED PILLS (CRITICAL):
+   Pills often lie side-by-side, touch each other, or slightly overlap on dispensing trays.
+   Look closely at individual pill contours, rounded ends, seams, bevels, and division lines.
+   If two or more pills touch or lie adjacent, EACH individual pill MUST be counted separately with its own center coordinate.
+   NEVER combine two touching pills into one.
+2. HIGH-DENSITY & LARGE BATCHES (Up to 100+ PILLS):
+   Scan the image methodically row by row from top to bottom, left to right.
+   Ensure every single pill body is located without omitting any pills near edges, in shadows, or tightly clustered.
+3. ALL PILL TYPES & COLORS:
+   Count all pills regardless of whether they are capsules, round tablets, oblong caplets, white, pink, green, yellow, or clear.
+4. EXCLUDE NON-PILLS:
+   Ignore reflections, glare, knife marks, shadows, or background tray textures.
+5. RETURN FORMAT:
+   Return ONLY valid JSON in this format:
 {
-  "count": <total integer number of pills>,
+  "count": <exact total integer number of pills>,
   "pills": [
     [<x 0-100>, <y 0-100>]
   ]
 }
-where each item in pills is a 2-element number array [x, y] representing center percentages from 0 to 100.
-The count MUST strictly match the exact number of coordinate pairs in the pills array.`;
+Rule: The "count" MUST strictly match the exact number of coordinate items in the "pills" array.`;
 
-    // Cascade of available models: fast preview first, then fallbacks
+    // Cascade of available models: try fast modern models first, then fallbacks
     const modelsToTry = [
-      "gemini-3-flash-preview",
       "gemini-3.5-flash",
-      "gemini-3.5-flash-lite",
+      "gemini-3-flash-preview",
       "gemini-3.6-flash",
+      "gemini-3.5-flash-lite",
       "gemini-flash-latest",
     ];
     let lastError: unknown = null;
@@ -97,9 +107,9 @@ The count MUST strictly match the exact number of coordinate pairs in the pills 
               ],
               generationConfig: {
                 responseMimeType: "application/json",
-                temperature: 0.1,
+                temperature: 0.0,
                 thinkingConfig: {
-                  thinkingBudget: 0,
+                  thinkingBudget: 64,
                 },
               },
             }),
