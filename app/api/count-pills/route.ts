@@ -50,7 +50,7 @@ export async function POST(req: NextRequest) {
 Your task is to locate and count EVERY SINGLE pill, tablet, or capsule in the image with 100% precision.
 
 CRITICAL INSTRUCTIONS:
-1. Count ALL pills, tablets, and capsules, even if touching, slightly overlapping, or different colors.
+1. Count ALL pills, tablets, and capsules, even if touching, slightly overlapping, or of different colors (e.g. pink, white, green, yellow, clear).
 2. Ignore shadows, knife marks, glare, reflections, or empty tray surfaces.
 3. For maximum speed, return ONLY this compact JSON format:
 {
@@ -59,11 +59,17 @@ CRITICAL INSTRUCTIONS:
     [<x 0-100>, <y 0-100>]
   ]
 }
-where each item in pills is a 2-element integer array [x, y] representing center percentages from 0 to 100.`;
+where each item in pills is a 2-element number array [x, y] representing center percentages from 0 to 100.
+The count MUST strictly match the exact number of coordinate pairs in the pills array.`;
 
-    // Call modern Gemini Flash Vision models (fallback order)
-    // Use ultra-fast gemini-3.5-flash without fallback delays
-    const modelsToTry = ["gemini-3.5-flash"];
+    // Cascade of available models: fast preview first, then fallbacks
+    const modelsToTry = [
+      "gemini-3-flash-preview",
+      "gemini-3.5-flash",
+      "gemini-3.5-flash-lite",
+      "gemini-3.6-flash",
+      "gemini-flash-latest",
+    ];
     let lastError: unknown = null;
 
     for (const model of modelsToTry) {
@@ -117,20 +123,18 @@ where each item in pills is a 2-element integer array [x, y] representing center
 
         const parsed = JSON.parse(contentText);
         let pillsRaw: unknown[] = [];
-        let totalCount = 0;
+        let parsedCount = 0;
 
         if (Array.isArray(parsed)) {
           pillsRaw = parsed;
-          totalCount = parsed.length;
+          parsedCount = parsed.length;
         } else if (parsed && typeof parsed === "object") {
           const obj = parsed as Record<string, unknown>;
           if (Array.isArray(obj.pills)) {
             pillsRaw = obj.pills;
           }
           if (typeof obj.count === "number") {
-            totalCount = obj.count;
-          } else {
-            totalCount = pillsRaw.length;
+            parsedCount = obj.count;
           }
         }
 
@@ -139,39 +143,41 @@ where each item in pills is a 2-element integer array [x, y] representing center
             let x = 50;
             let y = 50;
             if (Array.isArray(p)) {
-              x = Math.round(Number(p[0]) || 0);
-              y = Math.round(Number(p[1]) || 0);
+              x = Number(p[0]) || 0;
+              y = Number(p[1]) || 0;
             } else if (p && typeof p === "object") {
               const item = p as Record<string, unknown>;
               if (Array.isArray(item.point)) {
-                // [y, x] or [x, y] normalized
+                // [y, x] or [x, y]
                 const p0 = Number(item.point[0]) || 0;
                 const p1 = Number(item.point[1]) || 0;
-                y = Math.round(p0 > 100 ? p0 / 10 : p0);
-                x = Math.round(p1 > 100 ? p1 / 10 : p1);
+                y = p0;
+                x = p1;
               } else {
-                const px = Number(item.x) || 0;
-                const py = Number(item.y) || 0;
-                x = Math.round(px > 100 ? px / 10 : px);
-                y = Math.round(py > 100 ? py / 10 : py);
+                x = Number(item.x) || 0;
+                y = Number(item.y) || 0;
               }
             }
+
+            // Normalize coordinates from 0-1000 scale to 0-100%
+            if (x > 100) x = Math.round(x / 10);
+            if (y > 100) y = Math.round(y / 10);
+
             return {
               id: idx + 1,
-              x: Math.min(100, Math.max(0, x)),
-              y: Math.min(100, Math.max(0, y)),
+              x: Math.min(100, Math.max(0, Math.round(x))),
+              y: Math.min(100, Math.max(0, Math.round(y))),
               radius: 14,
               label: "알약",
             };
           }
         );
 
-        if (totalCount === 0 && pills.length > 0) {
-          totalCount = pills.length;
-        }
+        // Authoritative count matches the detected pills if available
+        const finalCount = pills.length > 0 ? pills.length : parsedCount;
 
         return NextResponse.json({
-          count: totalCount,
+          count: finalCount,
           pills,
           modelUsed: model,
           success: true,

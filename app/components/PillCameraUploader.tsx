@@ -381,7 +381,7 @@ async function getBase64FromUrl(url: string): Promise<string> {
     const img = document.createElement("img");
     img.crossOrigin = "anonymous";
     img.onload = () => {
-      const maxDim = 640;
+      const maxDim = 900;
       let w = img.naturalWidth || img.width;
       let h = img.naturalHeight || img.height;
       if (w > maxDim || h > maxDim) {
@@ -402,7 +402,7 @@ async function getBase64FromUrl(url: string): Promise<string> {
         return;
       }
       ctx.drawImage(img, 0, 0, w, h);
-      resolve(canvas.toDataURL("image/jpeg", 0.7));
+      resolve(canvas.toDataURL("image/jpeg", 0.8));
     };
     img.onerror = (e) => reject(e);
     img.src = url;
