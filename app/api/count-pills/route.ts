@@ -62,12 +62,8 @@ CRITICAL INSTRUCTIONS:
 where each item in pills is a 2-element integer array [x, y] representing center percentages from 0 to 100.`;
 
     // Call modern Gemini Flash Vision models (fallback order)
-    const modelsToTry = [
-      "gemini-3.5-flash",
-      "gemini-3.6-flash",
-      "gemini-flash-latest",
-      "gemini-2.5-flash"
-    ];
+    // Use ultra-fast gemini-3.5-flash without fallback delays
+    const modelsToTry = ["gemini-3.5-flash"];
     let lastError: unknown = null;
 
     for (const model of modelsToTry) {
@@ -120,30 +116,62 @@ where each item in pills is a 2-element integer array [x, y] representing center
         }
 
         const parsed = JSON.parse(contentText);
-        const pills: PillDetectionResult[] = (parsed.pills || []).map(
+        let pillsRaw: unknown[] = [];
+        let totalCount = 0;
+
+        if (Array.isArray(parsed)) {
+          pillsRaw = parsed;
+          totalCount = parsed.length;
+        } else if (parsed && typeof parsed === "object") {
+          const obj = parsed as Record<string, unknown>;
+          if (Array.isArray(obj.pills)) {
+            pillsRaw = obj.pills;
+          }
+          if (typeof obj.count === "number") {
+            totalCount = obj.count;
+          } else {
+            totalCount = pillsRaw.length;
+          }
+        }
+
+        const pills: PillDetectionResult[] = pillsRaw.map(
           (p: unknown, idx: number) => {
-            let x = 0;
-            let y = 0;
+            let x = 50;
+            let y = 50;
             if (Array.isArray(p)) {
-              x = Math.round(Number(p[0]));
-              y = Math.round(Number(p[1]));
+              x = Math.round(Number(p[0]) || 0);
+              y = Math.round(Number(p[1]) || 0);
             } else if (p && typeof p === "object") {
-              const obj = p as { x?: number; y?: number };
-              x = Math.round(Number(obj.x) || 0);
-              y = Math.round(Number(obj.y) || 0);
+              const item = p as Record<string, unknown>;
+              if (Array.isArray(item.point)) {
+                // [y, x] or [x, y] normalized
+                const p0 = Number(item.point[0]) || 0;
+                const p1 = Number(item.point[1]) || 0;
+                y = Math.round(p0 > 100 ? p0 / 10 : p0);
+                x = Math.round(p1 > 100 ? p1 / 10 : p1);
+              } else {
+                const px = Number(item.x) || 0;
+                const py = Number(item.y) || 0;
+                x = Math.round(px > 100 ? px / 10 : px);
+                y = Math.round(py > 100 ? py / 10 : py);
+              }
             }
             return {
               id: idx + 1,
-              x,
-              y,
+              x: Math.min(100, Math.max(0, x)),
+              y: Math.min(100, Math.max(0, y)),
               radius: 14,
               label: "알약",
             };
           }
         );
 
+        if (totalCount === 0 && pills.length > 0) {
+          totalCount = pills.length;
+        }
+
         return NextResponse.json({
-          count: parsed.count || pills.length,
+          count: totalCount,
           pills,
           modelUsed: model,
           success: true,
