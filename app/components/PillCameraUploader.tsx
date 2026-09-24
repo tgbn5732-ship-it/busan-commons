@@ -426,6 +426,7 @@ export default function PillCameraUploader() {
   const [isAiMode, setIsAiMode] = useState<boolean>(false);
   const [aiModelUsed, setAiModelUsed] = useState<string>("");
   const [analysisStatusText, setAnalysisStatusText] = useState<string>("정밀 분석 중...");
+  const [quotaErrorNotice, setQuotaErrorNotice] = useState<string>("");
 
   // PWA Install Prompt State
   const [deferredPrompt, setDeferredPrompt] = useState<unknown>(null);
@@ -534,8 +535,16 @@ export default function PillCameraUploader() {
             setDetectedPills(data.pills);
             setIsAiMode(true);
             setAiModelUsed(data.modelUsed || "Gemini AI Vision");
+            setQuotaErrorNotice("");
             aiSuccess = true;
           }
+        } else if (res.status === 429) {
+          const data = await res.json().catch(() => ({}));
+          setQuotaErrorNotice(
+            data.message ||
+              "구글 AI 무료 일일 한도(20회)가 소진되었습니다. 결제 계정 연동 시 무제한(1,000회당 약 40원) 이용이 가능합니다."
+          );
+          setShowAiModal(true);
         } else if (res.status === 401) {
           // API Key is not set on server or client
           if (!geminiApiKey) {
@@ -1005,7 +1014,19 @@ export default function PillCameraUploader() {
               </p>
             </div>
           ) : detectedCount !== null ? (
-            <div className="flex flex-col items-center justify-center">
+            <div className="flex flex-col items-center justify-center w-full">
+              {quotaErrorNotice && (
+                <div className="w-full max-w-sm mb-2.5 p-3 bg-amber-500/15 border border-amber-500/40 rounded-2xl text-amber-950 text-xs text-left flex items-start gap-2 shadow-xs">
+                  <span className="text-base shrink-0 mt-0.5">⚠️</span>
+                  <div className="space-y-0.5">
+                    <p className="font-extrabold text-amber-900">구글 무료 AI 일일 한도(20회) 소진</p>
+                    <p className="text-[11px] text-amber-800 leading-tight">
+                      오늘의 일일 무료 호출이 마감되어 정밀 AI 대신 로컬 모드가 동작했습니다. 상단 [AI 키 변경]에서 결제 계정을 등록하시면 <strong>하루 무제한(1,000회당 약 40원)</strong>으로 초정밀 카운팅이 가능합니다.
+                    </p>
+                  </div>
+                </div>
+              )}
+
               {/* AI vs Local Engine Status Indicator */}
               <div className="flex items-center gap-1.5 mb-1">
                 {isAiMode ? (
@@ -1285,6 +1306,17 @@ export default function PillCameraUploader() {
                 <X className="w-4 h-4" />
               </button>
             </div>
+
+            {quotaErrorNotice && (
+              <div className="p-3 bg-amber-50 border border-amber-200 rounded-2xl text-xs text-amber-900 space-y-1">
+                <p className="font-bold flex items-center gap-1 text-amber-800">
+                  <span>⚠️ 일일 무료 호출 한도(20회) 소진 안내</span>
+                </p>
+                <p className="text-[11px] text-amber-700 leading-relaxed">
+                  구글 무료 계정은 하루 20회로 제한됩니다. <strong>Google AI Studio에서 [Set up billing]으로 결제 계정을 등록</strong>하시면 <strong>하루 무제한(분당 2,000회)</strong>으로 초정밀 카운팅이 가능합니다. (비용: 1,000회당 약 40원 / 신규 $300 무료 크레딧 제공)
+                </p>
+              </div>
+            )}
 
             <div className="space-y-2 text-xs text-slate-600 leading-relaxed bg-emerald-50/70 p-3 rounded-2xl border border-emerald-100">
               <p className="font-bold text-emerald-900">

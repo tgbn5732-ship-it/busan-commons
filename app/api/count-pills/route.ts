@@ -72,12 +72,11 @@ CRITICAL DISPENSING RULES:
 }
 Rule: The "count" MUST strictly match the exact number of coordinate items in the "pills" array.`;
 
-    // Cascade of available models: try fast modern models first, then fallbacks
+    // High-accuracy models only (exclude lightweight models that hallucinate pill counts)
     const modelsToTry = [
       "gemini-3.5-flash",
-      "gemini-3-flash-preview",
       "gemini-3.6-flash",
-      "gemini-3.5-flash-lite",
+      "gemini-3-flash-preview",
       "gemini-flash-latest",
     ];
     let lastError: unknown = null;
@@ -197,12 +196,20 @@ Rule: The "count" MUST strictly match the exact number of coordinate items in th
       }
     }
 
+    const errMsg = lastError instanceof Error ? lastError.message : String(lastError);
+    const isQuota =
+      errMsg.includes("429") ||
+      errMsg.includes("quota") ||
+      errMsg.includes("RESOURCE_EXHAUSTED");
+
     return NextResponse.json(
       {
-        error: "AI_PROCESSING_FAILED",
-        message: lastError instanceof Error ? lastError.message : "AI 비전 분석 중 오류가 발생했습니다.",
+        error: isQuota ? "QUOTA_EXCEEDED" : "AI_PROCESSING_FAILED",
+        message: isQuota
+          ? "구글 AI 무료 계정의 일일 호출 한도(20회)가 모두 소진되었습니다. 결제 계정 등록 시 무제한(1,000회당 약 40원) 이용이 가능합니다."
+          : errMsg,
       },
-      { status: 500 }
+      { status: isQuota ? 429 : 500 }
     );
   } catch (err) {
     return NextResponse.json(
